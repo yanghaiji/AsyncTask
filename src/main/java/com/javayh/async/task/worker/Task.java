@@ -17,11 +17,12 @@ public interface Task<T> {
     /**
      * 需要运行的任务现成
      *
-     * @param defaultValue 默认的返回值
-     * @param executor     自定义的线程池
+     * @param defaultValue  默认的返回值
+     * @param executor      自定义的线程池
+     * @param timeoutMillis 超时时间
      * @return
      */
-    CompletableFuture<T> runAsync(T defaultValue, ExecutorService executor);
+    CompletableFuture<T> runAsync(long timeoutMillis, T defaultValue, ExecutorService executor);
 
     /**
      * 当前任务的名字
@@ -29,5 +30,12 @@ public interface Task<T> {
      * @return
      */
     String getName();
+
+    /**
+     * 获取返回值
+     *
+     * @return
+     */
+    T getResult();
 
 }
