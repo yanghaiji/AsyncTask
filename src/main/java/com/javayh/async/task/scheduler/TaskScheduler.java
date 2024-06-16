@@ -38,7 +38,7 @@ public class TaskScheduler {
     public <T> void addTask(Task<T> task, long timeoutMillis, T defaultValue) {
         tasks.put(task.getName(), task);
         taskStatuses.put(task.getName(), TaskStatus.PENDING);
-        CompletableFuture<T> future = task.runAsync(defaultValue, executor)
+        CompletableFuture<T> future = task.runAsync(timeoutMillis, defaultValue, executor)
             .thenApply(result -> {
                 taskStatuses.put(task.getName(), TaskStatus.COMPLETED);
                 return result;
@@ -68,7 +68,7 @@ public class TaskScheduler {
         // fix  thenComposeAsync 确保依赖任务完成后执行下一个任务。
         CompletableFuture<Object> future = dependencyFuture.thenComposeAsync(v -> {
             taskStatuses.put(taskName, TaskStatus.RUNNING);
-            return getTask(taskName).runAsync(defaultValue, executor)
+            return getTask(taskName).runAsync(timeoutMillis, defaultValue, executor)
                 .thenApply(result -> {
                     taskStatuses.put(taskName, TaskStatus.COMPLETED);
                     return result;
@@ -93,7 +93,7 @@ public class TaskScheduler {
      */
     public <T> void runTask(String taskName, long timeoutMillis, T defaultValue) {
         taskStatuses.put(taskName, TaskStatus.RUNNING);
-        futures.put(taskName, getTask(taskName).runAsync(defaultValue, executor));
+        futures.put(taskName, getTask(taskName).runAsync(timeoutMillis, defaultValue, executor));
     }
 
     /**
@@ -104,7 +104,7 @@ public class TaskScheduler {
      * @param timeoutMillis 超时时间，暂时没有完善，
      *                      可以升级jdk版本(jdk8不支持)，使用.orTimeout(timeoutMillis, TimeUnit.MILLISECONDS)实现
      * @param defaultValue  默认的返回值
-     * @param taskFunction  当前执行的任务
+     * @param taskFunction  当前执行的任务所依赖的返回值
      * @param dependencies  依赖的任务
      * @param <T>
      */

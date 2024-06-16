@@ -67,11 +67,11 @@ public class Test01 {
         scheduler.allOf("A", "E", "B", "C", "D");
 
         // 获取任务状态
-        System.out.println("Task A status: " + scheduler.getTaskStatus("A"));
-        System.out.println("Task E status: " + scheduler.getTaskStatus("E"));
-        System.out.println("Task B status: " + scheduler.getTaskStatus("B"));
-        System.out.println("Task C status: " + scheduler.getTaskStatus("C"));
-        System.out.println("Task D status: " + scheduler.getTaskStatus("D"));
+        System.out.println("Task A status: " + scheduler.getTaskStatus("A") +" results : " + taskA.getResult());
+        System.out.println("Task E status: " + scheduler.getTaskStatus("E") +" results : " + taskE.getResult());
+        System.out.println("Task B status: " + scheduler.getTaskStatus("B") +" results : " + taskB.getResult());
+        System.out.println("Task C status: " + scheduler.getTaskStatus("C") +" results : " + taskC.getResult());
+        System.out.println("Task D status: " + scheduler.getTaskStatus("D") +" results : " + taskD.getResult());
 
         System.out.println("All tasks are completed");
 

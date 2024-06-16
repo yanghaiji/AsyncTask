@@ -27,6 +27,11 @@ public class Worker<T> implements Task<T> {
      */
     private final Supplier<T> task;
 
+    /**
+     * 返回值
+     */
+    private T result;
+
     public Worker(String name, Supplier<T> task) {
         this.name = name;
         this.task = task;
@@ -35,17 +40,19 @@ public class Worker<T> implements Task<T> {
     /**
      * 需要运行的任务现成
      *
-     * @param defaultValue 默认的返回值
-     * @param executor     自定义的线程池
+     * @param defaultValue  默认的返回值
+     * @param executor      自定义的线程池
+     * @param timeoutMillis 超时时间
      * @return
      */
     @Override
-    public CompletableFuture<T> runAsync(T defaultValue, ExecutorService executor) {
+    public CompletableFuture<T> runAsync(long timeoutMillis, T defaultValue, ExecutorService executor) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Logger.log(name, "is running");
                 T result = task.get();
                 Logger.log(name, "is completed with result: " + result);
+                this.result = result;
                 return result;
             } catch (Exception e) {
                 Logger.log(name, "failed with exception: " + e.getMessage());
@@ -54,6 +61,7 @@ public class Worker<T> implements Task<T> {
         }, executor)
             .exceptionally(ex -> {
                 Logger.log(name, "failed with timeout or exception: " + ex.getMessage());
+                this.result = defaultValue;
                 return defaultValue;
             });
     }
@@ -62,5 +70,10 @@ public class Worker<T> implements Task<T> {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public T getResult() {
+        return result;
     }
 }
