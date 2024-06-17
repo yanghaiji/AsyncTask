@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.javayh.async.task.Logger;
 import com.javayh.async.task.TaskStatus;
+import com.javayh.async.task.executor.ThreadPoolManager;
 import com.javayh.async.task.worker.Task;
 
 
@@ -29,10 +29,11 @@ public class TaskScheduler {
     private final Map<String, CompletableFuture<?>> futures = new ConcurrentHashMap<>();
     private final Map<String, TaskStatus> taskStatuses = new ConcurrentHashMap<>();
     private final ExecutorService executor;
-
+    private final ThreadPoolManager poolManager;
 
     public TaskScheduler(int threadPoolSize) {
-        this.executor = Executors.newFixedThreadPool(threadPoolSize);
+        poolManager = ThreadPoolManager.getInstance();
+        this.executor = poolManager.createThreadPool(threadPoolSize);
     }
 
     public <T> void addTask(Task<T> task, long timeoutMillis, T defaultValue) {
@@ -179,6 +180,9 @@ public class TaskScheduler {
         } catch (InterruptedException e) {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
+        } finally {
+            poolManager.shutdownThreadPool(executor);
+            Logger.log("Thread Pool","关闭成功");
         }
     }
 }
