@@ -5,6 +5,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 import com.javayh.async.task.Logger;
+import com.javayh.async.task.exception.WorkException;
+import com.javayh.async.task.function.DefaultCallback;
+import com.javayh.async.task.function.ICallback;
+import com.javayh.async.task.function.Task;
 
 
 /**
@@ -16,7 +20,7 @@ import com.javayh.async.task.Logger;
  * @version 1.0.0
  * @since 2024-06-14
  */
-public class Worker<T> implements Task<T> {
+public class Worker<T, R> implements Task<T, R> {
     /**
      * 任务名称
      */
@@ -30,39 +34,51 @@ public class Worker<T> implements Task<T> {
     /**
      * 返回值
      */
-    private T result;
+    private R result;
+
+    private final ICallback<T, R> callback;
 
     public Worker(String name, Supplier<T> task) {
         this.name = name;
         this.task = task;
+        this.callback = new DefaultCallback<>();
+    }
+
+    public Worker(String name, Supplier<T> task, ICallback<T, R> callback) {
+        this.name = name;
+        this.task = task;
+        this.callback = callback;
     }
 
     /**
      * 需要运行的任务现成
      *
-     * @param defaultValue  默认的返回值
      * @param executor      自定义的线程池
      * @param timeoutMillis 超时时间
      * @return
      */
     @Override
-    public CompletableFuture<T> runAsync(long timeoutMillis, T defaultValue, ExecutorService executor) {
+    public CompletableFuture<R> runAsync(long timeoutMillis, ExecutorService executor) throws WorkException {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Logger.log(name, "is running");
                 T result = task.get();
                 Logger.log(name, "is completed with result: " + result);
-                this.result = result;
-                return result;
+                R res = this.callback.callback(result);
+                this.result = res;
+                return res;
             } catch (Exception e) {
                 Logger.log(name, "failed with exception: " + e.getMessage());
-                return defaultValue;
+                R res = callback.onFailure(e);
+                this.result = res;
+                return res;
             }
         }, executor)
             .exceptionally(ex -> {
                 Logger.log(name, "failed with timeout or exception: " + ex.getMessage());
-                this.result = defaultValue;
-                return defaultValue;
+                R res = callback.onFailure(ex);
+                this.result = res;
+                return res;
             });
     }
 
@@ -73,7 +89,8 @@ public class Worker<T> implements Task<T> {
     }
 
     @Override
-    public T getResult() {
+    public R getResult() {
         return result;
     }
+
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class AsyncTaskExecutor {
 
-    private volatile ThreadPoolExecutor singleton;
+    private final ThreadPoolExecutor singleton;
 
     public AsyncTaskExecutor(int core) {
         singleton = new ThreadPoolExecutor(core, core, 0L, TimeUnit.MILLISECONDS,
