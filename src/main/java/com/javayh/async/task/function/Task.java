@@ -1,7 +1,9 @@
-package com.javayh.async.task.worker;
+package com.javayh.async.task.function;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+
+import com.javayh.async.task.exception.WorkException;
 
 /**
  * <p>
@@ -12,17 +14,17 @@ import java.util.concurrent.ExecutorService;
  * @version 1.0.0
  * @since 2024-06-14
  */
-public interface Task<T> {
+public interface Task<T,R> {
 
     /**
      * 需要运行的任务现成
      *
-     * @param defaultValue  默认的返回值
      * @param executor      自定义的线程池
      * @param timeoutMillis 超时时间
      * @return
+     * @throws WorkException
      */
-    CompletableFuture<T> runAsync(long timeoutMillis, T defaultValue, ExecutorService executor);
+    CompletableFuture<R> runAsync(long timeoutMillis, ExecutorService executor) throws WorkException;
 
     /**
      * 当前任务的名字
@@ -36,6 +38,6 @@ public interface Task<T> {
      *
      * @return
      */
-    T getResult();
+    R getResult();
 
 }

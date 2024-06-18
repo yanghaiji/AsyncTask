@@ -17,43 +17,43 @@ public class Test01 {
         TaskScheduler scheduler = new TaskScheduler(4);  // 设置线程池大小为4
 
         // 创建任务
-        Worker<Integer> taskA = new Worker<>("A", () -> {
+        Worker<Integer,Integer> taskA = new Worker<>("A", () -> {
             sleep(1000);
             return 1;
         });
 
-        Worker<Integer> taskE = new Worker<>("E", () -> {
+        Worker<Integer,Integer>taskE = new Worker<>("E", () -> {
             sleep(1000);
             return 2;
         });
 
-        Worker<Integer> taskB = new Worker<>("B", () -> {
+        Worker<Integer,Integer> taskB = new Worker<>("B", () -> {
             sleep(1000);
             return 3;
         });
 
-        Worker<Integer> taskC = new Worker<>("C", () -> {
+        Worker<Integer,Integer>taskC = new Worker<>("C", () -> {
             sleep(1000);
             return 4;
         });
 
-        Worker<Integer> taskD = new Worker<>("D", () -> {
+        Worker<Integer,Integer> taskD = new Worker<>("D", () -> {
             sleep(1000);
             return 5;
         });
 
         // 添加任务到调度器，设置超时和默认值
-        scheduler.addTask(taskA, 2000, -1);
-        scheduler.addTask(taskE, 2000, -1);
-        scheduler.addTask(taskB, 2000, -1);
-        scheduler.addTask(taskC, 2000, -1);
-        scheduler.addTask(taskD, 2000, -1);
+        scheduler.addTask(taskA, 2000);
+        scheduler.addTask(taskE, 2000);
+        scheduler.addTask(taskB, 2000);
+        scheduler.addTask(taskC, 2000);
+        scheduler.addTask(taskD, 2000);
 
         // 定义任务的依赖关系
-        scheduler.runTask("A", 2000, -1); // 启动任务A
-        scheduler.runTask("E", 2000, -1); // 启动任务E
-        scheduler.runTaskAfter("B", 2000, -1, "A"); // 在任务A完成后启动任务B
-        scheduler.runTaskAfter("C", 2000, -1, "A"); // 在任务A完成后启动任务C
+        scheduler.runTask("A", 2000); // 启动任务A
+        scheduler.runTask("E", 2000); // 启动任务E
+        scheduler.runTaskAfter("B", 2000, "A"); // 在任务A完成后启动任务B
+        scheduler.runTaskAfter("C", 2000, "A"); // 在任务A完成后启动任务C
 
         // 在任务B和C完成后，使用返回值启动任务D
         scheduler.runTaskAfterWithResult("D", results -> {
@@ -61,7 +61,7 @@ public class Test01 {
             int resultC = (int) results.get("C");
             System.out.println("Results from B and C: " + resultB + ", " + resultC);
             return resultB + resultC;
-        }, 2000, -1, "B", "C");
+        }, 2000, "B", "C");
 
         // 等待所有任务完成
         scheduler.allOf("A", "E", "B", "C", "D");
