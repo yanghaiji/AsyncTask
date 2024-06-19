@@ -6,7 +6,6 @@ import java.util.function.Supplier;
 
 import com.javayh.async.task.Logger;
 import com.javayh.async.task.exception.WorkException;
-import com.javayh.async.task.function.DefaultCallback;
 import com.javayh.async.task.function.ICallback;
 import com.javayh.async.task.function.Task;
 
@@ -29,22 +28,21 @@ public class Worker<T, R> implements Task<T, R> {
     /**
      * 执行的线程
      */
-    private final Supplier<T> task;
+    private final Supplier<R> task;
 
     /**
      * 返回值
      */
     private R result;
 
-    private final ICallback<T, R> callback;
+    private ICallback<T, R> callback;
 
-    public Worker(String name, Supplier<T> task) {
+    public Worker(String name, Supplier<R> task) {
         this.name = name;
         this.task = task;
-        this.callback = new DefaultCallback<>();
     }
 
-    public Worker(String name, Supplier<T> task, ICallback<T, R> callback) {
+    public Worker(String name, Supplier<R> task, ICallback<T, R> callback) {
         this.name = name;
         this.task = task;
         this.callback = callback;
@@ -62,9 +60,9 @@ public class Worker<T, R> implements Task<T, R> {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Logger.log(name, "is running");
-                T result = task.get();
+                R result = task.get();
                 Logger.log(name, "is completed with result: " + result);
-                R res = this.callback.callback(result);
+                R res = this.callback.result(result);
                 this.result = res;
                 return res;
             } catch (Exception e) {
