@@ -42,16 +42,17 @@ public class TaskScheduler implements SchedulerExecutor {
     public <T, R> void addTask(Task<T, R> task, long timeoutMillis) {
         tasks.put(task.getName(), task);
         taskStatuses.putIfAbsent(task.getName(), TaskStatus.PENDING);
-        CompletableFuture<R> future = task.runAsync(timeoutMillis, executor)
-            .thenApply(result -> {
-                taskStatuses.put(task.getName(), TaskStatus.COMPLETED);
-                return result;
-            })
-            .exceptionally(ex -> {
-                taskStatuses.put(task.getName(), TaskStatus.FAILED);
-                return null;
-            });
-        futures.put(task.getName(), future);
+        // fix 添加任务时不在执行任务
+//        CompletableFuture<R> future = task.runAsync(timeoutMillis, executor)
+//            .thenApply(result -> {
+//                taskStatuses.put(task.getName(), TaskStatus.COMPLETED);
+//                return result;
+//            })
+//            .exceptionally(ex -> {
+//                taskStatuses.put(task.getName(), TaskStatus.FAILED);
+//                return null;
+//            });
+//        futures.put(task.getName(), future);
     }
 
     /**
@@ -101,7 +102,16 @@ public class TaskScheduler implements SchedulerExecutor {
             return;
         }
         taskStatuses.put(taskName, TaskStatus.RUNNING);
-        futures.put(taskName, getTask(taskName).runAsync(timeoutMillis, executor));
+        // fix 进行状态的会刷,防止状态不对
+        CompletableFuture<Object> future = getTask(taskName).runAsync(timeoutMillis, executor)
+            .thenApply(result -> {
+                taskStatuses.put(taskName, TaskStatus.COMPLETED);
+                return result;
+            }).exceptionally(ex -> {
+                taskStatuses.put(taskName, TaskStatus.FAILED);
+                throw new TaskSchedulerException(ex.toString());
+            });
+        futures.put(taskName, future);
     }
 
     /**
@@ -122,23 +132,21 @@ public class TaskScheduler implements SchedulerExecutor {
             .map(futures::get)
             .toArray(CompletableFuture[]::new));
         // fix  thenComposeAsync 确保依赖任务完成后执行下一个任务。
-        CompletableFuture<R> future = dependencyFuture.thenComposeAsync(v -> {
+        CompletableFuture<Object> future = dependencyFuture.thenComposeAsync(v -> {
             Map<String, Object> results = new ConcurrentHashMap<>();
             for (String dependency : dependencies) {
                 results.put(dependency, futures.get(dependency).join());
             }
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    taskStatuses.put(taskName, TaskStatus.RUNNING);
-                    R result = taskFunction.apply(results);
+            // fix 不创建新的任务,而是根据任务名获取的方式执行任务
+            return getTask(taskName).runAsync(timeoutMillis, executor)
+                .thenApply(result -> {
                     taskStatuses.put(taskName, TaskStatus.COMPLETED);
                     return result;
-                } catch (Exception e) {
+                })
+                .exceptionally(ex -> {
                     taskStatuses.put(taskName, TaskStatus.FAILED);
-                    Logger.log(taskName, "failed with exception: " + e.getMessage());
-                    throw new TaskSchedulerException(e);
-                }
-            }, executor);
+                    throw new TaskSchedulerException(ex.toString());
+                });
         }, executor)
             .exceptionally(ex -> {
                 Logger.log(taskName, "failed with exception: " + ex.getMessage());
