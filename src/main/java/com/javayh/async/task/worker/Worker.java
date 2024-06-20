@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import com.javayh.async.task.Logger;
 import com.javayh.async.task.exception.WorkException;
+import com.javayh.async.task.function.DefaultCallback;
 import com.javayh.async.task.function.ICallback;
 import com.javayh.async.task.function.Task;
 
@@ -40,6 +41,7 @@ public class Worker<T, R> implements Task<T, R> {
     public Worker(String name, Supplier<R> task) {
         this.name = name;
         this.task = task;
+        this.callback = new DefaultCallback<>();
     }
 
     public Worker(String name, Supplier<R> task, ICallback<T, R> callback) {
@@ -59,21 +61,20 @@ public class Worker<T, R> implements Task<T, R> {
     public CompletableFuture<R> runAsync(long timeoutMillis, ExecutorService executor) throws WorkException {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Logger.log(name, "is running");
                 R result = task.get();
-                Logger.log(name, "is completed with result: " + result);
+                Logger.info("{} is completed with result: {}", name, result);
                 R res = this.callback.result(result);
                 this.result = res;
                 return res;
             } catch (Exception e) {
-                Logger.log(name, "failed with exception: " + e.getMessage());
+                Logger.error(name, "failed with exception: {}", e.getMessage());
                 R res = callback.onFailure(e);
                 this.result = res;
                 return res;
             }
         }, executor)
             .exceptionally(ex -> {
-                Logger.log(name, "failed with timeout or exception: " + ex.getMessage());
+                Logger.error(" {} failed with timeout or exception: {}", name, ex.getMessage());
                 R res = callback.onFailure(ex);
                 this.result = res;
                 return res;

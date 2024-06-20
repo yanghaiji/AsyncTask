@@ -40,7 +40,7 @@ public abstract class ICallback<T, R> {
      * @return
      */
     public R onFailure(Throwable t) {
-        Logger.log("DefaultCallback", t.getMessage());
+        Logger.error("DefaultCallback {}", t.getMessage());
         return null;
     }
 }
