@@ -80,6 +80,7 @@ public class TaskScheduler implements SchedulerExecutor {
                 })
                 .exceptionally(ex -> {
                     taskStatuses.put(taskName, TaskStatus.FAILED);
+                    Logger.error("{} is already failed. exceptionally {}", taskName, ex);
                     throw new TaskSchedulerException(ex.toString());
                 });
         }, executor);
@@ -98,21 +99,15 @@ public class TaskScheduler implements SchedulerExecutor {
     @Override
     public <T, R> void runTask(String taskName, long timeoutMillis) {
         if (taskStatuses.get(taskName) != TaskStatus.PENDING) {
-            Logger.log(taskName, "is already running or completed.");
+            Logger.info(taskName, "is already running or completed.");
             return;
         }
         taskStatuses.put(taskName, TaskStatus.RUNNING);
         // fix 进行状态的会刷,防止状态不对
-        CompletableFuture<Object> future = getTask(taskName).runAsync(timeoutMillis, executor)
-            .thenApply(result -> {
-                taskStatuses.put(taskName, TaskStatus.COMPLETED);
-                return result;
-            }).exceptionally(ex -> {
-                taskStatuses.put(taskName, TaskStatus.FAILED);
-                throw new TaskSchedulerException(ex.toString());
-            });
+        CompletableFuture<Object> future = runAsync(taskName, timeoutMillis, "{} is already failed. exceptionally {}");
         futures.put(taskName, future);
     }
+
 
     /**
      * 在所有依赖的任务完成后执行一个给定的任务，并收集依赖任务的结果作为输入参数传递给这个任务。
@@ -138,22 +133,26 @@ public class TaskScheduler implements SchedulerExecutor {
                 results.put(dependency, futures.get(dependency).join());
             }
             // fix 不创建新的任务,而是根据任务名获取的方式执行任务
-            return getTask(taskName).runAsync(timeoutMillis, executor)
-                .thenApply(result -> {
-                    taskStatuses.put(taskName, TaskStatus.COMPLETED);
-                    return result;
-                })
-                .exceptionally(ex -> {
-                    taskStatuses.put(taskName, TaskStatus.FAILED);
-                    throw new TaskSchedulerException(ex.toString());
-                });
+            return runAsync(taskName, timeoutMillis, "{} is already failed. runTaskAfterWithResult 150 exceptionally {}");
         }, executor)
             .exceptionally(ex -> {
-                Logger.log(taskName, "failed with exception: " + ex.getMessage());
+                Logger.error("{} is already failed. runTaskAfterWithResult 155 exceptionally {}", taskName, ex);
                 throw new TaskSchedulerException("failed with exception: " + ex);
             });
 
         futures.put(taskName, future);
+    }
+
+    private CompletableFuture<Object> runAsync(String taskName, long timeoutMillis, String msg) {
+        return getTask(taskName).runAsync(timeoutMillis, executor)
+            .thenApply(result -> {
+                taskStatuses.put(taskName, TaskStatus.COMPLETED);
+                return result;
+            }).exceptionally(ex -> {
+                taskStatuses.put(taskName, TaskStatus.FAILED);
+                Logger.error(msg, taskName, ex);
+                throw new TaskSchedulerException(ex.toString());
+            });
     }
 
     /**
@@ -169,6 +168,7 @@ public class TaskScheduler implements SchedulerExecutor {
         try {
             allTasks.join();
         } catch (Exception e) {
+            Logger.error("{} is already failed. allOf 155 exceptionally {}", taskNames, e);
             throw new TaskSchedulerException(e);
         }
     }
@@ -200,7 +200,7 @@ public class TaskScheduler implements SchedulerExecutor {
             Thread.currentThread().interrupt();
         } finally {
             poolManager.shutdownThreadPool(executor);
-            Logger.log("Thread Pool", "关闭成功");
+            Logger.info("Thread Pool {}", "shutdown");
         }
     }
 }

@@ -36,7 +36,26 @@ public class TestBuilder {
             return 5;
         });
 
-        TaskScheduler scheduler = new SchedulerBuilder()
+//        TaskScheduler scheduler = new SchedulerBuilder()
+//            .setThreadPoolSize(20)
+//            .addTask(taskA, 1000)
+//            .addTask(taskB, 2000)
+//            .addTask(taskC, 2000)
+//            .addTask(taskD, 2000)
+//            .runTask("A", 3000)
+//            .runTask("B", 3000)
+//            .runTaskAfter("C", 3000, "A", "B")
+//            .runTaskAfterWithResult("D", resultMap -> {
+//                // 使用resultMap处理结果
+//                return 5;
+//            }, 4000, "C")
+//            .build();
+//        // 等待所有任务完成
+//        scheduler.allOf("A", "B", "C", "D");
+//        scheduler.shutdown();
+
+        // 所有任务执行完成后，会自动关闭任务
+        TaskScheduler schedulerAndShutdown = new SchedulerBuilder()
             .setThreadPoolSize(20)
             .addTask(taskA, 1000)
             .addTask(taskB, 2000)
@@ -49,11 +68,9 @@ public class TestBuilder {
                 // 使用resultMap处理结果
                 return 5;
             }, 4000, "C")
-            .build();
-        // 等待所有任务完成
-        scheduler.allOf("A", "B", "C", "D");
-        scheduler.shutdown();
+            .buildAndShutdown();
 
+        Logger.info("完成了所有的任务，将之心后续的操作");
     }
 
     private static void sleep(int millis) {
