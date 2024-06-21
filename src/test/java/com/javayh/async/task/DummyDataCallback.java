@@ -23,8 +23,7 @@ public class DummyDataCallback {
             return 1;
         }, new ICallback<Integer, Integer>() {
             @Override
-            public Integer callback(Integer result) {
-                return result;
+            public void callback(Integer result) {
             }
 
             @Override
@@ -39,8 +38,7 @@ public class DummyDataCallback {
             return 2;
         }, new ICallback<Integer, Integer>() {
             @Override
-            public Integer callback(Integer result) {
-                return result;
+            public void callback(Integer result) {
             }
 
             @Override
@@ -55,8 +53,7 @@ public class DummyDataCallback {
             return 3 / 0;  // 模拟异常
         }, new ICallback<Integer, Integer>() {
             @Override
-            public Integer callback(Integer result) {
-                return result;
+            public void callback(Integer result) {
             }
 
             @Override
@@ -70,8 +67,7 @@ public class DummyDataCallback {
             return 4;
         }, new ICallback<Integer, Integer>() {
             @Override
-            public Integer callback(Integer result) {
-                return result;
+            public void callback(Integer result) {
             }
 
             @Override
@@ -86,8 +82,7 @@ public class DummyDataCallback {
             return 5;
         }, new ICallback<Integer, Integer>() {
             @Override
-            public Integer callback(Integer result) {
-                return result;
+            public void callback(Integer result) {
             }
 
             @Override
