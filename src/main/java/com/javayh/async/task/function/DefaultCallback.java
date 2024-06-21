@@ -16,11 +16,9 @@ public class DefaultCallback<T, R> extends ICallback<T, R> {
 
     /**
      * @param call 回调函数
-     * @return
      */
     @Override
-    public R callback(T call) {
-        return (R) call;
+    public void callback(T call) {
     }
 
     /**

@@ -2,6 +2,7 @@ package com.javayh.async.task.worker;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.javayh.async.task.Logger;
@@ -36,7 +37,10 @@ public class Worker<T, R> implements Task<T, R> {
      */
     private R result;
 
-    private ICallback<T, R> callback;
+    /**
+     * 请求的回调函数
+     */
+    private final ICallback<T, R> callback;
 
     public Worker(String name, Supplier<R> task) {
         this.name = name;

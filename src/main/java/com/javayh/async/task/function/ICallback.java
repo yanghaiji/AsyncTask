@@ -24,13 +24,12 @@ public abstract class ICallback<T, R> {
     }
 
     /**
-     * 失败后的回调函数,可以用于默认返回值的处理,或异常事件触发
+     * 目前时在任务执行完成后，在finally 中执行，可以用于一些日志的记录
      *
-     * @param call 回调函数
-     * @return
+     * @param request 回调函数
      */
-    public R callback(T call) {
-        return null;
+    public void callback(T request) {
+        Logger.info("callback is done , parameter : {}", request);
     }
 
     /**
